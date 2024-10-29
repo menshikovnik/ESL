@@ -1,8 +1,6 @@
 #include "boards.h"
 #include "nrf_delay.h"
-#include <math.h>
 #include <stdbool.h>
-#include <stdint.h>
 
 #define DEVICE_ID 6586
 #define LED_ON_TIME_MS 400
@@ -39,7 +37,7 @@ int main(void)
   }
 }
 
-void led_blink(int i) 
+void led_blink(const int i)
 {
   bsp_board_led_invert(i);
   nrf_delay_ms(LED_ON_TIME_MS);

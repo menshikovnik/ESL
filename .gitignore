@@ -1,0 +1,4 @@
+/.vscode/
+*.c.swp
+/.idea/
+/_build/
