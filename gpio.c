@@ -35,8 +35,6 @@ int main(void)
     while (true) {
         if (nrf_gpio_pin_read(SW_PIN) == 0) {
             play_sequence();
-        } else {
-            turn_off_all_leds();
         }
     }
 }
@@ -67,7 +65,12 @@ void play_sequence()
 
     nrf_gpio_pin_write(led_sequence[curr_led], 0);
 
-    nrf_delay_ms(1000);
+    for (int i = 0; i < 10; ++i) {
+        if (nrf_gpio_pin_read(SW_PIN) == 1) {
+            return;
+        }
+        nrf_delay_ms(100);
+    }
 
     nrf_gpio_pin_write(led_sequence[curr_led], 1);
 
@@ -80,7 +83,7 @@ void sequence_init()
 {
     int digits[4];
     int id = DEVICE_ID;
-    for (int i = 3;i >= 0;--i) {
+    for (int i = 3; i >= 0; --i) {
         digits[i] = id % 10;
         id /= 10;
     }
