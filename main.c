@@ -1,46 +1,136 @@
-#include "boards.h"
+//
+// Created by Nick Menshikov on 26.10.2024.
+//
+
+#include <stdlib.h>
+
+#include "nrf_gpio.h"
 #include "nrf_delay.h"
-#include <stdbool.h>
+#include "nrf_log.h"
 
 #define DEVICE_ID 6586
-#define LED_ON_TIME_MS 400
-#define LED_OFF_TIME_MS 400
-#define PAUSE_BETWEEN_LEDS 2000
-#define PAUSE_AFTER_ID_MS 3000
+#define DELAY_AFTER_LED_BLINK_MS 1000
+#define DELAY_AFTER_LED_OFF_MS 1000
+#define LED_PIN_1 NRF_GPIO_PIN_MAP(0, 6)
+#define LED_PIN_2_R NRF_GPIO_PIN_MAP(0, 8)
+#define LED_PIN_2_G NRF_GPIO_PIN_MAP(1, 9)
+#define LED_PIN_2_B NRF_GPIO_PIN_MAP(0, 12)
+#define SW_PIN NRF_GPIO_PIN_MAP(1, 6)
 
-void led_blink(int i);
+int digits[4];
+int seq_size;
+int curr_led = 0;
 
-int main(void) 
+void turn_off_all_leds(void);
+
+void gpio_init(void);
+
+void play_sequence(int pin);
+
+void sequence_init(int* led_sequence);
+
+void turn_off_led(int pin);
+
+void turn_on_led(int pin);
+
+void calculate_size_of_sequence(void);
+
+bool is_button_pressed(void);
+
+
+int main(void)
 {
-  bsp_board_init(BSP_INIT_LEDS);
-
-  int digits[4];
-  int id = DEVICE_ID;
-
-  for (int i = 3; i >= 0; i--) {
-    digits[i] = id % 10;
-    id /= 10;
-  }
-
-  while (true) {
-    for (int i = 0; i < 4; i++) {
-      for (int j = 0; j < digits[i]; j++) {
-        led_blink(i);
-      }
-      nrf_delay_ms(PAUSE_BETWEEN_LEDS);
+    gpio_init();
+    calculate_size_of_sequence();
+    int led_sequence[seq_size];
+    sequence_init(led_sequence);
+    turn_off_all_leds();
+    while (true) {
+        if (is_button_pressed()) {
+            play_sequence(led_sequence[curr_led]);
+        }
     }
-
-    bsp_board_leds_on();
-    nrf_delay_ms(PAUSE_BETWEEN_LEDS);
-    bsp_board_leds_off();
-    nrf_delay_ms(PAUSE_AFTER_ID_MS);
-  }
 }
 
-void led_blink(const int i)
+void gpio_init(void)
 {
-  bsp_board_led_invert(i);
-  nrf_delay_ms(LED_ON_TIME_MS);
-  bsp_board_led_invert(i);
-  nrf_delay_ms(LED_OFF_TIME_MS);
+    nrf_gpio_cfg_output(LED_PIN_1);
+    nrf_gpio_cfg_output(LED_PIN_2_R);
+    nrf_gpio_cfg_output(LED_PIN_2_G);
+    nrf_gpio_cfg_output(LED_PIN_2_B);
+
+    nrf_gpio_cfg_input(SW_PIN, NRF_GPIO_PIN_PULLUP);
+}
+
+void turn_off_all_leds(void)
+{
+    nrf_gpio_pin_write(LED_PIN_1, 1);
+    nrf_gpio_pin_write(LED_PIN_2_R, 1);
+    nrf_gpio_pin_write(LED_PIN_2_G, 1);
+    nrf_gpio_pin_write(LED_PIN_2_B, 1);
+}
+
+void play_sequence(const int pin)
+{
+    if (curr_led >= seq_size) {
+        curr_led = 0;
+    }
+
+    turn_on_led(pin);
+
+    for (int i = 0; i < DELAY_AFTER_LED_BLINK_MS / 100; ++i) {
+        if (!is_button_pressed()) {
+            return;
+        }
+        nrf_delay_ms(DELAY_AFTER_LED_BLINK_MS / 10);
+    }
+
+    turn_off_led(pin);
+
+    nrf_delay_ms(DELAY_AFTER_LED_BLINK_MS);
+
+    ++curr_led;
+}
+
+void sequence_init(int *led_sequence)
+{
+    int idx = 0;
+
+    for (int i = 0; i < digits[0]; ++i) {
+        led_sequence[idx++] = LED_PIN_1;
+    }
+    for (int i = 0; i < digits[1]; ++i) {
+        led_sequence[idx++] = LED_PIN_2_R;
+    }
+    for (int i = 0; i < digits[2]; ++i) {
+        led_sequence[idx++] = LED_PIN_2_G;
+    }
+    for (int i = 0; i < digits[3]; ++i) {
+        led_sequence[idx++] = LED_PIN_2_B;
+    }
+}
+
+bool is_button_pressed()
+{
+    return nrf_gpio_pin_read(SW_PIN) == 0;
+}
+
+void turn_off_led(const int pin)
+{
+    nrf_gpio_pin_write(pin, 1);
+}
+
+void turn_on_led(const int pin)
+{
+    nrf_gpio_pin_write(pin, 0);
+}
+
+void calculate_size_of_sequence(void)
+{
+    int id = DEVICE_ID;
+    for (int i = 3; i >= 0; --i) {
+        digits[i] = id % 10;
+        id /= 10;
+    }
+    seq_size = digits[0] + digits[1] + digits[2] + digits[3];
 }
