@@ -11,6 +11,7 @@ PROJ_DIR := ../../..
 $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
   LINKER_SCRIPT  := blinky_gcc_nrf52.ld
 
+# Source files common to all targets              
 SRC_FILES += \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_frontend.c \
@@ -43,8 +44,8 @@ SRC_FILES += \
   $(SDK_ROOT)/components/libraries/usbd/app_usbd.c \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_clock.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
-  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_power.c
-  
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_power.c \
+  $(PROJ_DIR)/button_module/button.c \
 
 # Include folders common to all targets
 INC_FOLDERS += \
@@ -80,6 +81,8 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/usbd \
   $(SDK_ROOT)/components/libraries/log \
   $(SDK_ROOT)/integration/nrfx/legacy \
+  $(PROJ_DIR)/button_module \
+
 
 # Libraries common to all targets
 LIB_FILES += \
